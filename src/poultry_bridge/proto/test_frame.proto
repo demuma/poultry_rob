@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package test.v1;
+
+// ---- Minimal header ----
+message Header {
+  uint64 seq = 1;              // laufende Nummer
+  int64 stamp_unix_ms = 2;     // Timestamp (ms since epoch)
+  string frame_id = 3;         // z.B. "farm"
+}
+
+// ---- Simple 2D point ----
+message Point2D {
+  float x = 1;
+  float y = 2;
+}
+
+// ---- A detected object (hen, egg, whatever) ----
+message Object {
+  uint32 id = 1;
+  string type = 2;             // "HEN", "EGG", "ROBOT"
+  Point2D position = 3;
+}
+
+// ---- One complete snapshot ----
+message TestFrame {
+  Header header = 1;
+  repeated Object objects = 2;
+}

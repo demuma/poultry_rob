@@ -1,0 +1,16 @@
+mission_executor:
+  ros__parameters:
+
+    # Strategy selection
+    travel_strategy: "nearest_neighbor"
+    approach_strategy: "direct"
+
+    # Navigation settings
+    nav_timeout_sec: 5.0
+    global_frame: "map"
+
+    # Runtime
+    use_sim_time: false
+
+    # Debug
+    enable_debug_logs: true

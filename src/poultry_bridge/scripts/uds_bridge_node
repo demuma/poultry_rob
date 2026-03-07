@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+from poultry_bridge.uds_bridge_node import main
+main()
