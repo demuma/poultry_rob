@@ -25,7 +25,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mission_executor = high_level_mission_planer.mission_executor:main'
+            'mission_executor = high_level_mission_planer.mission_executor:main',
+            'fake_nav2_server = high_level_mission_planer.fake_nav2_server:main',
         ],
     },
 )
