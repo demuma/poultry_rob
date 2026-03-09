@@ -1,4 +1,0 @@
-#!/usr/bin/env python3
-from high_level_mission_planer.fake_nav2_server import main
-main()
-

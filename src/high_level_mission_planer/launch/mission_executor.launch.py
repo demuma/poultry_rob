@@ -19,5 +19,10 @@ def generate_launch_description():
             name="mission_executor",
             output="screen",
             parameters=[config]
+        ),
+        Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            arguments=["13.01", "-1.91", "0", "0", "0", "0", "map", "camera_optical_frame"]
         )
     ])

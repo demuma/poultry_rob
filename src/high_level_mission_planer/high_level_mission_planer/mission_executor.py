@@ -182,18 +182,22 @@ class MissionExecutor(Node):
 
     def execute_mission(self, msg: Frame):
 
-        # Extract ROBOT position as current location
+        source_frame = msg.header.frame_id or "camera_optical_frame"
+
+        # Extract ROBOT position transformed to map
         robot_position = None
         for obj in msg.objects:
             if obj.type == "ROBOT":
-                robot_position = (obj.position.x, obj.position.y)
+                tx, ty = self._transform_point(obj.position.x, obj.position.y, source_frame)
+                robot_position = (tx, ty)
                 break
 
-        # Extract only non-ROBOT objects as navigation targets
-        current_positions = [
-            (obj.id, obj.type, obj.position.x, obj.position.y)
-            for obj in msg.objects if obj.type != "ROBOT"
-        ]
+        # Extract only non-ROBOT objects as navigation targets, transformed to map
+        current_positions = []
+        for obj in msg.objects:
+            if obj.type != "ROBOT":
+                tx, ty = self._transform_point(obj.position.x, obj.position.y, source_frame)
+                current_positions.append((obj.id, obj.type, tx, ty))
 
         self.travel_plan = self.compute_travel_plan(current_positions, robot_position)
         self.current_goal_index = 0
@@ -292,6 +296,19 @@ class MissionExecutor(Node):
     # ==========================================================
     # UTILITIES
     # ==========================================================
+
+    def _transform_point(self, x: float, y: float, source_frame: str):
+        """Transform a 2D point from source_frame to map via TF."""
+        try:
+            t = self.tf_buffer.lookup_transform("map", source_frame, rclpy.time.Time())
+            tx = x + t.transform.translation.x
+            ty = y + t.transform.translation.y
+            return tx, ty
+        except Exception as exc:
+            self.get_logger().warn(
+                f"TF transform {source_frame} -> map failed: {exc}. Using raw coordinates."
+            )
+            return x, y
 
     def create_pose(self, x, y) -> PoseStamped:
         pose = PoseStamped()
