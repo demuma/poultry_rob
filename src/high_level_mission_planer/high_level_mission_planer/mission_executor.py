@@ -81,6 +81,12 @@ class MissionExecutor(Node):
         if new_rows:
             self.positions = np.vstack([self.positions, new_rows])
 
+        for obj in msg.objects:
+            self.get_logger().info(
+                f"Incoming position: id={obj.id} type={obj.type} "
+                f"x={obj.position.x:.3f} y={obj.position.y:.3f}"
+            )
+
         # Only navigate to non-ROBOT targets
         targets = [obj for obj in msg.objects if obj.type != "ROBOT"]
 
@@ -198,6 +204,7 @@ class MissionExecutor(Node):
             if obj.type != "ROBOT":
                 tx, ty = self._transform_point(obj.position.x, obj.position.y, source_frame)
                 current_positions.append((obj.id, obj.type, tx, ty))
+                
 
         self.travel_plan = self.compute_travel_plan(current_positions, robot_position)
         self.current_goal_index = 0
@@ -242,10 +249,16 @@ class MissionExecutor(Node):
 
         goal = NavigateToPose.Goal()
         goal.pose = self.apply_approach_strategy(pose)
+        
 
         self.get_logger().info(
-            f"Navigating to x={pose.pose.position.x:.2f}, "
-            f"y={pose.pose.position.y:.2f}"
+            f"Sending pose [{self.current_goal_index + 1}/{len(self.travel_plan)}]: "
+            f"x={pose.pose.position.x:.3f} y={pose.pose.position.y:.3f}"
+        )
+
+        self.get_logger().info(
+            f"Sending goal [{self.current_goal_index + 1}/{len(self.travel_plan)}]: "
+            f"x={goal.pose.pose.position.x:.3f} y={goal.pose.pose.position.y:.3f}"
         )
 
         future = self.nav_client.send_goal_async(goal)

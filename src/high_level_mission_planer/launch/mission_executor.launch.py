@@ -23,6 +23,6 @@ def generate_launch_description():
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["13.01", "-1.91", "0", "0", "0", "3.141592653589793", "map", "camera_optical_frame"]
+            arguments=["0.1", "-0.1", "0", "0", "0", "0", "map", "camera_optical_frame"]
         )
     ])

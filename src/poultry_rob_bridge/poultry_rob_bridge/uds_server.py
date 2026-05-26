@@ -29,14 +29,14 @@ def build_frame(seq: int) -> pb.Frame:
     o1 = frame.objects.add()
     o1.id = 1
     o1.type = "HEN"
-    o1.position.x = 2.3
-    o1.position.y = 4.1
+    o1.position.x = 6.0
+    o1.position.y = -1.0
 
     o2 = frame.objects.add()
     o2.id = 2
     o2.type = "HEN"
-    o2.position.x = 4.5
-    o2.position.y = 6.2
+    o2.position.x = 0.6
+    o2.position.y = -2.0
 
     o3 = frame.objects.add()
     o3.id = 7
