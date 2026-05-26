@@ -49,7 +49,7 @@ def main() -> None:
 
             # Print first few objects
             for obj in frame.objects[:5]:
-                print(f"  - id={obj.id} type={obj.type} pos=({obj.position.x:.2f},{obj.position.y:.2f})")
+                print(f"  - id={obj.id} type={obj.type} priority={obj.priority} pos=({obj.position.x:.2f},{obj.position.y:.2f})")
 
     except KeyboardInterrupt:
         print("\n[client] bye")

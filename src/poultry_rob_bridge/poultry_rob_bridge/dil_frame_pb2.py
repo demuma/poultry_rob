@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0f\x64il_frame.proto\x12\x0fpoultry_rob.dil\">\n\x06Header\x12\x0b\n\x03seq\x18\x01 \x01(\x04\x12\x15\n\rstamp_unix_ms\x18\x02 \x01(\x03\x12\x10\n\x08\x66rame_id\x18\x03 \x01(\t\"\x1f\n\x07Point2D\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\"N\n\x06Object\x12\n\n\x02id\x18\x01 \x01(\r\x12\x0c\n\x04type\x18\x02 \x01(\t\x12*\n\x08position\x18\x03 \x01(\x0b\x32\x18.poultry_rob.dil.Point2D\"Z\n\x05\x46rame\x12\'\n\x06header\x18\x01 \x01(\x0b\x32\x17.poultry_rob.dil.Header\x12(\n\x07objects\x18\x02 \x03(\x0b\x32\x17.poultry_rob.dil.Objectb\x06proto3'
+  serialized_pb=b'\n\x0f\x64il_frame.proto\x12\x0fpoultry_rob.dil\">\n\x06Header\x12\x0b\n\x03seq\x18\x01 \x01(\x04\x12\x15\n\rstamp_unix_ms\x18\x02 \x01(\x03\x12\x10\n\x08\x66rame_id\x18\x03 \x01(\t\"\x1f\n\x07Point2D\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\"`\n\x06Object\x12\n\n\x02id\x18\x01 \x01(\r\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x10\n\x08priority\x18\x03 \x01(\r\x12*\n\x08position\x18\x04 \x01(\x0b\x32\x18.poultry_rob.dil.Point2D\"Z\n\x05\x46rame\x12\'\n\x06header\x18\x01 \x01(\x0b\x32\x17.poultry_rob.dil.Header\x12(\n\x07objects\x18\x02 \x03(\x0b\x32\x17.poultry_rob.dil.Objectb\x06proto3'
 )
 
 
@@ -133,8 +133,15 @@ _OBJECT = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='position', full_name='poultry_rob.dil.Object.position', index=2,
-      number=3, type=11, cpp_type=10, label=1,
+      name='priority', full_name='poultry_rob.dil.Object.priority', index=2,
+      number=3, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='position', full_name='poultry_rob.dil.Object.position', index=3,
+      number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -152,7 +159,7 @@ _OBJECT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=133,
-  serialized_end=211,
+  serialized_end=229,
 )
 
 
@@ -190,8 +197,8 @@ _FRAME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=213,
-  serialized_end=303,
+  serialized_start=231,
+  serialized_end=321,
 )
 
 _OBJECT.fields_by_name['position'].message_type = _POINT2D

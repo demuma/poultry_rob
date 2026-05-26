@@ -106,7 +106,7 @@ class UdsProtoToRosBridge(Node):
             ros_obj = ObjectMsg()
             ros_obj.id = proto_obj.id
             ros_obj.type = proto_obj.type
-            ros_obj.priority = 0
+            ros_obj.priority = proto_obj.priority
             ros_obj.position = Point(
                 x=float(proto_obj.position.x),
                 y=float(proto_obj.position.y),

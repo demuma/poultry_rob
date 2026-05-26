@@ -19,7 +19,8 @@ message Point2D {
 message Object {
   uint32 id = 1;
   string type = 2;             // "HEN", "EGG", "ROBOT"
-  Point2D position = 3;
+  uint32 priority = 3;
+  Point2D position = 4;
 }
 
 // ---- One complete snapshot ----
