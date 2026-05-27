@@ -1,4 +1,4 @@
-# How to use the DIL/HAW Hamburg poultry detection and navigation system
+# How to use the DIL/HAW Hamburg interface and navigation system
 
 ## Run navigation planner
 1. Clone repository:
