@@ -12,5 +12,5 @@ fi
 export ROS_DOMAIN_ID=75
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 # Uncomment when multiple ethernet port and set the right one for ROS2 communication
-#export CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces><NetworkInterface name="enp129s0"/></Interfaces></General></Domain></CycloneDDS>'
+export CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces><NetworkInterface name="enp129s0"/></Interfaces></General></Domain></CycloneDDS>'
 exec "$@"
