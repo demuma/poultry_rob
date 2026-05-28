@@ -30,7 +30,7 @@
 1. Set network interface for ROS2 in *entrypoint.sh* at line 15 or comment out when there is only one interface:
 
 	```bash
- 	cd pountry_rob/src/poultry_rob_bridge
+ 	cd poultry_rob/src/poultry_rob_bridge
  	```
 
 3. Build container from *src* with:
