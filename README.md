@@ -1,6 +1,7 @@
 # How to use the DIL/HAW Hamburg interface and navigation system
+__Note__: This package is build for ROS2 Humble and Ubuntu 22.04
 
-## Run navigation planner
+## Run navigation planner 
 1. Clone repository:
 
 	```bash
