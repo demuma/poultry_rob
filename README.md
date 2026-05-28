@@ -26,7 +26,7 @@
 	ros2 launch high_level_mission_planner mission_executor.launch.py
  	```
 
-## Docker container for Socket to ROS2 communication
+## Docker container for socket to ROS2 communication
 1. Set network interface for ROS2 in *entrypoint.sh* at line 15 or comment out when there is only one interface:
 
 	```bash
@@ -45,3 +45,18 @@
 	```bash
 	docker run --rm -it --network host -v /tmp:/tmp --name dil dil-ros2-humble:latest
  	```
+ 
+ ## Using the protobuf message
+ 1. Copy the python protobuf message and build it for your system:
+    
+	```bash
+	cd poultry_rob/src/poultry_rob_bridge/proto
+	cp dil_frame.proto custom.proto
+ 	protoc --python_out=. custom.proto
+ 	```
+
+ 2. Use it in your python project:
+
+    ```python
+    import custom_pb2 as pb
+    ```
