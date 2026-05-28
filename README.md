@@ -31,7 +31,7 @@ __Note__: This package is build for ROS2 Humble and Ubuntu 22.04
 1. Set network interface for ROS2 in *entrypoint.sh* at line 15 or comment out when there is only one interface:
 
 	```bash
- 	cd poultry_rob/src/poultry_rob_bridge
+ 	cd poultry_rob/src
  	```
 
 3. Build container from *src* with:
