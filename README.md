@@ -38,7 +38,7 @@ __Note__: This package is build for ROS2 Humble and Ubuntu 22.04
 
 	```bash
 	cd src
-	docker build -f ./poultry_rob_bridge/Dockerfile -t dil-ros2-humble:latest
+	docker build . -f ./poultry_rob_bridge/Dockerfile -t dil-ros2-humble:latest
  	```
 
 4. Run docker container:
