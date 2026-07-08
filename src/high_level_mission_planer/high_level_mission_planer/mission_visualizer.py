@@ -282,20 +282,20 @@ class MissionVisualizer(Node):
         robot = self._base_marker("robot", 1, Marker.ARROW)
         robot.pose.position.x = robot_pose[0]
         robot.pose.position.y = robot_pose[1]
-        robot.pose.position.z = 0.15
+        robot.pose.position.z = 0.08
         self._apply_yaw(robot.pose, robot_pose[2])
-        robot.scale.x = 0.5
-        robot.scale.y = 0.1
-        robot.scale.z = 0.15
-        robot.color = self._color(0.1, 0.45, 1.0)
+        robot.scale.x = 0.28
+        robot.scale.y = 0.045
+        robot.scale.z = 0.06
+        robot.color = self._color(0.1, 0.45, 1.0, 0.35)
 
         label = self._base_marker("robot_label", 1, Marker.TEXT_VIEW_FACING)
         label.pose.position.x = robot_pose[0]
         label.pose.position.y = robot_pose[1]
         label.pose.position.z = 0.75
-        label.scale.z = 0.25
+        label.scale.z = 0.16
         label.text = "base_link"
-        label.color = self._color(0.65, 0.85, 1.0)
+        label.color = self._color(0.65, 0.85, 1.0, 0.55)
 
         return [robot, label]
 

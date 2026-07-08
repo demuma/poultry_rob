@@ -8,9 +8,11 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionServer, CancelResponse
 from rclpy.duration import Duration
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
 from nav2_msgs.action import NavigateToPose
+from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
 
 
@@ -29,17 +31,22 @@ class FakeNavServer(Node):
         self.declare_parameter("initial_y", 0.0)
         self.declare_parameter("visit_event_path", "/tmp/poultry_robot_visits.jsonl")
         self.declare_parameter("publish_visit_events", True)
+        self.declare_parameter("wheel_radius_m", 0.078)
+        self.declare_parameter("wheel_track_width_m", 0.379)
 
         self.robot_x = self.get_parameter("initial_x").value
         self.robot_y = self.get_parameter("initial_y").value
         self.robot_yaw = 0.0
         self.current_linear_velocity = 0.0
         self.current_angular_velocity = 0.0
+        self.left_wheel_position = 0.0
+        self.right_wheel_position = 0.0
         self.last_robot_x = self.robot_x
         self.last_robot_y = self.robot_y
         self.last_motion_time = self.get_clock().now()
         self.tf_broadcaster = TransformBroadcaster(self)
         self.odom_pub = self.create_publisher(Odometry, "odom", 10)
+        self.joint_state_pub = self.create_publisher(JointState, "joint_states", 10)
         self.create_timer(0.1, self._publish_robot_state)
 
         self._action_server = ActionServer(
@@ -61,6 +68,7 @@ class FakeNavServer(Node):
         dt = max((now - self.last_motion_time).nanoseconds / 1e9, 0.001)
         vx = (self.robot_x - self.last_robot_x) / dt
         vy = (self.robot_y - self.last_robot_y) / dt
+        self._update_wheel_positions(dt)
 
         transform = TransformStamped()
         transform.header.stamp = now.to_msg()
@@ -84,10 +92,61 @@ class FakeNavServer(Node):
         odom.twist.twist.linear.y = 0.0
         odom.twist.twist.angular.z = float(self.current_angular_velocity)
         self.odom_pub.publish(odom)
+        self._publish_joint_state(now)
 
         self.last_robot_x = self.robot_x
         self.last_robot_y = self.robot_y
         self.last_motion_time = now
+
+    def _update_wheel_positions(self, dt: float) -> None:
+        radius = max(float(self.get_parameter("wheel_radius_m").value), 0.001)
+        track_width = max(float(self.get_parameter("wheel_track_width_m").value), 0.001)
+
+        left_linear_velocity = (
+            self.current_linear_velocity
+            - self.current_angular_velocity * track_width * 0.5
+        )
+        right_linear_velocity = (
+            self.current_linear_velocity
+            + self.current_angular_velocity * track_width * 0.5
+        )
+
+        self.left_wheel_position += (left_linear_velocity / radius) * dt
+        self.right_wheel_position += (right_linear_velocity / radius) * dt
+
+    def _publish_joint_state(self, stamp) -> None:
+        radius = max(float(self.get_parameter("wheel_radius_m").value), 0.001)
+        track_width = max(float(self.get_parameter("wheel_track_width_m").value), 0.001)
+        left_linear_velocity = (
+            self.current_linear_velocity
+            - self.current_angular_velocity * track_width * 0.5
+        )
+        right_linear_velocity = (
+            self.current_linear_velocity
+            + self.current_angular_velocity * track_width * 0.5
+        )
+
+        msg = JointState()
+        msg.header.stamp = stamp.to_msg()
+        msg.name = [
+            "joint_wheel_fl",
+            "joint_wheel_fr",
+            "joint_wheel_rl",
+            "joint_wheel_rr",
+        ]
+        msg.position = [
+            self.left_wheel_position,
+            self.right_wheel_position,
+            self.left_wheel_position,
+            self.right_wheel_position,
+        ]
+        msg.velocity = [
+            left_linear_velocity / radius,
+            right_linear_velocity / radius,
+            left_linear_velocity / radius,
+            right_linear_velocity / radius,
+        ]
+        self.joint_state_pub.publish(msg)
 
     def _robot_speed(self) -> float:
         return max(float(self.get_parameter("robot_speed_mps").value), 0.01)
@@ -279,7 +338,7 @@ def main(args=None):
 
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

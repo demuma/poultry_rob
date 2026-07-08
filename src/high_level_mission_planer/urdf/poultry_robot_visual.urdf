@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<robot name="poultry_robot_visual">
+  <material name="chassis_gray">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+  <material name="wheel_black">
+    <color rgba="0.02 0.02 0.02 1.0"/>
+  </material>
+  <material name="sensor_blue">
+    <color rgba="0.1 0.35 0.9 1.0"/>
+  </material>
+  <material name="sensor_dark">
+    <color rgba="0.01 0.01 0.015 1.0"/>
+  </material>
+  <material name="mount_black">
+    <color rgba="0.05 0.05 0.05 1.0"/>
+  </material>
+
+  <link name="base_link"/>
+
+  <joint name="base_to_chassis" type="fixed">
+    <parent link="base_link"/>
+    <child link="chassis"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="chassis">
+    <visual>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.36 0.267 0.0785"/>
+      </geometry>
+      <material name="chassis_gray"/>
+    </visual>
+  </link>
+
+  <link name="wheel_fl">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.078" length="0.08"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+  </link>
+  <joint name="joint_wheel_fl" type="continuous">
+    <parent link="chassis"/>
+    <child link="wheel_fl"/>
+    <origin xyz="0.1387 0.1895 -0.0127" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="wheel_fr">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.078" length="0.08"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+  </link>
+  <joint name="joint_wheel_fr" type="continuous">
+    <parent link="chassis"/>
+    <child link="wheel_fr"/>
+    <origin xyz="0.1387 -0.1895 -0.0127" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="wheel_rl">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.078" length="0.08"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+  </link>
+  <joint name="joint_wheel_rl" type="continuous">
+    <parent link="chassis"/>
+    <child link="wheel_rl"/>
+    <origin xyz="-0.1387 0.1895 -0.0127" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="wheel_rr">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.078" length="0.08"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+  </link>
+  <joint name="joint_wheel_rr" type="continuous">
+    <parent link="chassis"/>
+    <child link="wheel_rr"/>
+    <origin xyz="-0.1387 -0.1895 -0.0127" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="livox_frame">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <mesh filename="package://high_level_mission_planer/meshes/mid-360-asm.dae" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="livox_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="livox_frame"/>
+    <origin xyz="0.11 0.0 0.11" rpy="0.0 0.38 0.0"/>
+  </joint>
+
+  <link name="livox_mount">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.0175" length="0.04"/>
+      </geometry>
+      <material name="mount_black"/>
+    </visual>
+  </link>
+  <joint name="livox_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="livox_mount"/>
+    <origin xyz="0.11 0.0 0.078" rpy="0 0 0"/>
+  </joint>
+</robot>

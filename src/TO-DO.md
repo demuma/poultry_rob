@@ -186,9 +186,18 @@ Die Launch-Datei startet zusaetzlich `mission_visualizer`. Die Node publiziert:
 - `/mission/current_goal`: aktuelles Ziel aus dem MissionExecutor als `PoseStamped`.
 - `/mission/visited_target_ids`: besuchte Hennen, die in RViz ausgeblendet und in der Zielauswahl ignoriert werden.
 - `/odom`: FakeNav2-Odometrie; spaeter kann hier reale Roboter-Odometrie angezeigt werden.
+- `/robot_description`: optionales URDF-RobotModel, wenn der Launch mit `use_robot_description:=true` gestartet wird.
 
 RViz-Konfiguration:
 
 ```bash
 rviz2 -d /home/maxdemu/Documents/ros2-ws/install/high_level_mission_planer/share/high_level_mission_planer/rviz/mission_visualization.rviz
 ```
+
+URDF mit FakeNav2 koppeln:
+
+```bash
+ros2 launch high_level_mission_planer mission_executor.launch.py use_robot_description:=true
+```
+
+Der FakeNav2-Server liefert `map -> base_link`; `robot_state_publisher` haengt daran die URDF-Links an. Standard ist eine schlanke Visualisierungs-URDF im `high_level_mission_planer`-Package. Die originale Xacro-`robot_description` aus dem Roboter-Repo kann spaeter ueber deren eigenen Launch genutzt werden, sobald `xacro` und die Hardware-Abhaengigkeiten installiert sind.

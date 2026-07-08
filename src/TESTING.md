@@ -108,6 +108,22 @@ ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
   ros2 launch high_level_mission_planer mission_executor.launch.py
 ```
 
+With the poultry robot URDF in RViz:
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/maxdemu/Documents/ros2-ws/install/setup.bash
+ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+  ros2 launch high_level_mission_planer mission_executor.launch.py use_robot_description:=true
+```
+
+By default this uses the lightweight visualization model installed with
+`high_level_mission_planer`. The robot repository's original Xacro can be used
+later through its own `robot_description` launch once its hardware dependencies
+and `xacro` are installed.
+
+The mission launch expects a ready URDF file via `robot_description_file`.
+
 Expected mission executor logs:
 
 ```text
@@ -149,7 +165,9 @@ Visualization topics:
 /mission/current_goal           # current mission goal from MissionExecutor
 /mission/visited_target_ids     # visited hens hidden from RViz and excluded from target selection
 /odom                           # fake Nav2 odometry, or real robot odometry later
+/joint_states                   # fake wheel joint positions for the RViz RobotModel
 /tf                             # map -> base_link and camera transform
+/robot_description              # URDF model when use_robot_description:=true
 ```
 
 Visited hens stay suppressed by default while the detector keeps reporting them at the same position. If a hen with the same ID moves farther than `arrival_radius_m`, it becomes active again.
