@@ -21,6 +21,13 @@ def generate_launch_description():
             parameters=[config]
         ),
         Node(
+            package="high_level_mission_planer",
+            executable="mission_visualizer",
+            name="mission_visualizer",
+            output="screen",
+            parameters=[config]
+        ),
+        Node(
             package="tf2_ros",
             executable="static_transform_publisher",
             arguments=["0.1", "-0.1", "0", "0", "0", "0", "map", "camera_optical_frame"]

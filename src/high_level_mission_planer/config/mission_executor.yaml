@@ -9,8 +9,47 @@ mission_executor:
     nav_timeout_sec: 5.0
     global_frame: "map"
 
+    # Target lifecycle
+    target_stale_timeout_sec: 2.0
+    visited_cooldown_sec: 30.0
+    revisit_visited_after_cooldown: false
+    arrival_radius_m: 0.75
+
+    # Weighted target selection
+    priority_weight: 2.5
+    dwell_weight: 0.0
+    distance_weight: 1.0
+    stale_weight: 0.5
+    max_priority: 3.0
+    max_relevant_distance_m: 10.0
+    max_dwell_time_sec: 60.0
+    plan_preview_length: 10
+
+    # Nav2 recovery
+    enable_nav_watchdog: true
+    nav_watchdog_period_sec: 1.0
+    nav_recovery_grace_sec: 2.0
+
     # Runtime
     use_sim_time: false
 
     # Debug
     enable_debug_logs: true
+
+mission_visualizer:
+  ros__parameters:
+
+    global_frame: "map"
+    robot_frame: "base_link"
+    target_stale_timeout_sec: 2.0
+    publish_period_sec: 0.2
+
+    # Simple field outline for RViz context
+    field_min_x: -5.0
+    field_max_x: 30.0
+    field_min_y: -10.0
+    field_max_y: 10.0
+
+    # Robot trajectory
+    path_min_step_m: 0.05
+    max_path_points: 1000
