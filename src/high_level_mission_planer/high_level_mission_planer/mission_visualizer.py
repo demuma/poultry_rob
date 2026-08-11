@@ -13,6 +13,7 @@ from tf2_ros import Buffer, TransformListener
 from visualization_msgs.msg import Marker, MarkerArray
 
 from poultry_rob_bridge_msgs.msg import Frame
+from poultry_rob_bridge_msgs.msg import TrackedTargetArray
 
 
 @dataclass
@@ -23,6 +24,7 @@ class VisualTarget:
     x: float
     y: float
     last_seen: float
+    status: str = "active"
 
 
 class MissionVisualizer(Node):
@@ -40,10 +42,16 @@ class MissionVisualizer(Node):
         self.declare_parameter("field_max_y", 10.0)
         self.declare_parameter("path_min_step_m", 0.05)
         self.declare_parameter("max_path_points", 1000)
+        self.declare_parameter("use_tracked_targets", True)
+        self.declare_parameter("tracked_targets_topic", "/mission/tracked_targets")
+        self.declare_parameter("dil_frame_topic", "/dil/frame")
+        self.declare_parameter("enable_dil_frame_fallback", True)
+        self.declare_parameter("tracked_targets_timeout_sec", 2.0)
 
         self.targets: Dict[int, VisualTarget] = {}
         self.current_goal: Optional[PoseStamped] = None
         self.latest_odom: Optional[Odometry] = None
+        self.last_tracked_targets_at: Optional[float] = None
         self.visible_target_ids: Set[int] = set()
         self.visited_target_ids: Set[int] = set()
         self.robot_path = Path()
@@ -64,7 +72,18 @@ class MissionVisualizer(Node):
         )
         self.path_pub = self.create_publisher(Path, "/mission/robot_path", 10)
 
-        self.create_subscription(Frame, "/dil/frame", self.frame_callback, 10)
+        self.create_subscription(
+            Frame,
+            self.get_parameter("dil_frame_topic").get_parameter_value().string_value,
+            self.frame_callback,
+            10,
+        )
+        self.create_subscription(
+            TrackedTargetArray,
+            self.get_parameter("tracked_targets_topic").get_parameter_value().string_value,
+            self.tracked_targets_callback,
+            10,
+        )
         self.create_subscription(PoseStamped, "/mission/current_goal", self.goal_callback, 10)
         self.create_subscription(UInt32MultiArray, "/mission/visited_target_ids", self.visited_callback, 10)
         self.create_subscription(Odometry, "/odom", self.odom_callback, 10)
@@ -82,6 +101,27 @@ class MissionVisualizer(Node):
 
     def _now_seconds(self) -> float:
         return self.get_clock().now().nanoseconds / 1e9
+
+    def _use_tracked_targets(self) -> bool:
+        return self.get_parameter("use_tracked_targets").get_parameter_value().bool_value
+
+    def _dil_frame_fallback_enabled(self) -> bool:
+        return self.get_parameter("enable_dil_frame_fallback").get_parameter_value().bool_value
+
+    def _tracked_targets_timeout(self) -> float:
+        return max(
+            self.get_parameter("tracked_targets_timeout_sec").get_parameter_value().double_value,
+            0.1,
+        )
+
+    def _dil_frame_fallback_active(self) -> bool:
+        if not self._use_tracked_targets():
+            return True
+        if not self._dil_frame_fallback_enabled():
+            return False
+        if self.last_tracked_targets_at is None:
+            return True
+        return self._now_seconds() - self.last_tracked_targets_at > self._tracked_targets_timeout()
 
     def _stamp_to_seconds(self, stamp) -> float:
         stamp_sec = float(stamp.sec) + float(stamp.nanosec) / 1e9
@@ -141,6 +181,9 @@ class MissionVisualizer(Node):
             return pose.x, pose.y, yaw
 
     def frame_callback(self, msg: Frame):
+        if not self._dil_frame_fallback_active():
+            return
+
         source_frame = msg.header.frame_id or self._global_frame()
         stamp_sec = self._stamp_to_seconds(msg.header.stamp)
 
@@ -156,7 +199,37 @@ class MissionVisualizer(Node):
                 x=x,
                 y=y,
                 last_seen=stamp_sec,
+                status="active",
             )
+
+    def tracked_targets_callback(self, msg: TrackedTargetArray):
+        if not self._use_tracked_targets():
+            return
+
+        self.last_tracked_targets_at = self._now_seconds()
+        source_frame = msg.header.frame_id or self._global_frame()
+
+        targets: Dict[int, VisualTarget] = {}
+        for tracked in msg.targets:
+            if tracked.type != "HEN":
+                continue
+
+            x, y = self._transform_point(
+                tracked.position.x,
+                tracked.position.y,
+                source_frame,
+            )
+            targets[int(tracked.target_id)] = VisualTarget(
+                id=int(tracked.target_id),
+                type=tracked.type,
+                priority=int(tracked.priority),
+                x=x,
+                y=y,
+                last_seen=self._stamp_to_seconds(tracked.last_seen),
+                status=tracked.status or "active",
+            )
+
+        self.targets = targets
 
     def goal_callback(self, msg: PoseStamped):
         self.current_goal = msg
@@ -176,6 +249,7 @@ class MissionVisualizer(Node):
             target
             for target in self.targets.values()
             if now - target.last_seen <= float(self.get_parameter("target_stale_timeout_sec").value)
+            and target.status != "stale"
             and target.id not in self.visited_target_ids
         ]
         active_target_ids = {target.id for target in active_targets}

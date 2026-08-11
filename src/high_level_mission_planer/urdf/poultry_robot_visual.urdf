@@ -21,7 +21,7 @@
   <joint name="base_to_chassis" type="fixed">
     <parent link="base_link"/>
     <child link="chassis"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 0.0907" rpy="0 0 0"/>
   </joint>
 
   <link name="chassis">
@@ -109,7 +109,7 @@
   <joint name="livox_joint" type="fixed">
     <parent link="base_link"/>
     <child link="livox_frame"/>
-    <origin xyz="0.11 0.0 0.11" rpy="0.0 0.38 0.0"/>
+    <origin xyz="0.11 0.0 0.2007" rpy="0.0 0.38 0.0"/>
   </joint>
 
   <link name="livox_mount">
@@ -124,6 +124,6 @@
   <joint name="livox_mount_joint" type="fixed">
     <parent link="base_link"/>
     <child link="livox_mount"/>
-    <origin xyz="0.11 0.0 0.078" rpy="0 0 0"/>
+    <origin xyz="0.11 0.0 0.1687" rpy="0 0 0"/>
   </joint>
 </robot>

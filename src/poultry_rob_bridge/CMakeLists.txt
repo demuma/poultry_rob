@@ -12,6 +12,7 @@ install(PROGRAMS
   scripts/uds_bridge_node
   scripts/uds_client
   scripts/uds_server
+  scripts/scenario_uds_server
   DESTINATION lib/${PROJECT_NAME}
 )
 

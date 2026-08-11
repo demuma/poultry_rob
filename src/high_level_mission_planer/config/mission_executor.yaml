@@ -10,9 +10,9 @@ mission_executor:
     global_frame: "map"
 
     # Target lifecycle
-    target_stale_timeout_sec: 2.0
+    target_stale_timeout_sec: 5.0
     visited_cooldown_sec: 30.0
-    revisit_visited_after_cooldown: false
+    revisit_visited_after_cooldown: true
     arrival_radius_m: 0.75
 
     # Weighted target selection
@@ -30,6 +30,13 @@ mission_executor:
     nav_watchdog_period_sec: 1.0
     nav_recovery_grace_sec: 2.0
 
+    # Target input
+    use_tracked_targets: true
+    tracked_targets_topic: "/mission/tracked_targets"
+    dil_frame_topic: "/dil/frame"
+    enable_dil_frame_fallback: true
+    tracked_targets_timeout_sec: 2.0
+
     # Runtime
     use_sim_time: false
 
@@ -41,7 +48,7 @@ mission_visualizer:
 
     global_frame: "map"
     robot_frame: "base_link"
-    target_stale_timeout_sec: 2.0
+    target_stale_timeout_sec: 5.0
     publish_period_sec: 0.2
 
     # Simple field outline for RViz context
@@ -53,3 +60,21 @@ mission_visualizer:
     # Robot trajectory
     path_min_step_m: 0.05
     max_path_points: 1000
+
+    # Target input
+    use_tracked_targets: true
+    tracked_targets_topic: "/mission/tracked_targets"
+    dil_frame_topic: "/dil/frame"
+    enable_dil_frame_fallback: true
+    tracked_targets_timeout_sec: 2.0
+
+target_manager:
+  ros__parameters:
+
+    global_frame: "map"
+    association_radius_m: 0.35
+    same_source_max_jump_m: 0.8
+    target_stale_timeout_sec: 5.0
+    target_prune_timeout_sec: 60.0
+    publish_period_sec: 0.2
+    enable_debug_logs: true

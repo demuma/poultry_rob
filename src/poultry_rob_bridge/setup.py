@@ -23,6 +23,7 @@ setup(
             "uds_bridge_node = poultry_rob_bridge.uds_bridge_node:main",
             "uds_client      = poultry_rob_bridge.uds_client:main",
             "uds_server      = poultry_rob_bridge.uds_server:main",
+            "scenario_uds_server = poultry_rob_bridge.scenario_uds_server:main",
         ],
     },
 )

@@ -10,6 +10,7 @@ import os
 
 def generate_launch_description():
     use_robot_description = LaunchConfiguration("use_robot_description")
+    use_rviz = LaunchConfiguration("use_rviz")
     robot_description_package = LaunchConfiguration("robot_description_package")
     robot_description_file = LaunchConfiguration("robot_description_file")
 
@@ -17,6 +18,11 @@ def generate_launch_description():
         get_package_share_directory("high_level_mission_planer"),
         "config",
         "mission_executor.yaml"
+    )
+    rviz_config = os.path.join(
+        get_package_share_directory("high_level_mission_planer"),
+        "rviz",
+        "mission_visualization.rviz"
     )
 
     robot_description_content = Command([
@@ -33,6 +39,11 @@ def generate_launch_description():
             "use_robot_description",
             default_value="false",
             description="Start robot_state_publisher for the poultry robot URDF.",
+        ),
+        DeclareLaunchArgument(
+            "use_rviz",
+            default_value="false",
+            description="Start RViz with the mission visualization config.",
         ),
         DeclareLaunchArgument(
             "robot_description_package",
@@ -59,6 +70,13 @@ def generate_launch_description():
             parameters=[config]
         ),
         Node(
+            package="high_level_mission_planer",
+            executable="target_manager",
+            name="target_manager",
+            output="screen",
+            parameters=[config]
+        ),
+        Node(
             package="tf2_ros",
             executable="static_transform_publisher",
             arguments=["0.1", "-0.1", "0", "0", "0", "0", "map", "camera_optical_frame"]
@@ -72,5 +90,13 @@ def generate_launch_description():
             parameters=[{
                 "robot_description": robot_description_content,
             }],
+        ),
+        Node(
+            package="rviz2",
+            executable="rviz2",
+            name="rviz2",
+            arguments=["-d", rviz_config],
+            output="screen",
+            condition=IfCondition(use_rviz),
         )
     ])

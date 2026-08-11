@@ -11,6 +11,8 @@ Der MissionExecutor soll Hennen nicht mehr in der Eingangreihenfolge anfahren, s
 - Docker/Bridge/UDS funktionieren mit:
   - `docker run --rm --network host -v /tmp:/tmp --name dil dil-ros2-humble:latest`
   - danach im Container: `ros2 run poultry_rob_bridge uds_server`
+- Der normale `uds_server` soll DIL-nah bleiben: Protobuf-Frames mit Hennen-ID, Position und Prioritaet ueber UDS senden, aber keine HAW-Missionslogik ausfuehren.
+- Reproduzierbare HAW-Testfaelle laufen separat ueber `scenario_uds_server`.
 - `/dil/frame` liefert aktuell Szenario-Hennen. Die Roboterposition kommt im Test ueber TF `map -> base_link` vom `fake_nav2_server`; echte Roboterpose spaeter ebenfalls bevorzugt ueber TF bzw. Roboter-Odom.
 - Der aktuelle Executor startet nach jedem Frame sofort wieder eine neue Mission, weil der FakeNav2-Server direkt Erfolg meldet.
 - `Object.priority` kommt im Topic an, wird im Executor aber nicht geloggt und nicht bewertet.
@@ -131,6 +133,14 @@ Konfigurierbare Parameter:
 - [x] Besuchte Hennen aus Zielauswahl und RViz ausblenden, bis sie sich sichtbar bewegen.
 - [x] Simulation entfernt Hennen nach Roboterbesuch im Besuchsradius.
 - [x] Nav2-Watchdog fuer Action-Server-Ausfall und Recovery nach Power-/Akkuwechsel ergaenzen.
+- [x] DIL-nahe `uds_server`-Rolle von HAW-Szenario-/Analyseverhalten trennen.
+- [x] Szenario-UDS-Server als separaten `scenario_uds_server` erhalten.
+- [x] `target_manager` als separate HAW-Logikschicht fuer stabile interne Targets parallel einfuehren.
+- [x] MissionExecutor von `/dil/frame` auf `/mission/tracked_targets` mit `/dil/frame`-Fallback umstellen.
+- [x] RViz-Visualisierung von `/dil/frame` auf `/mission/tracked_targets` mit `/dil/frame`-Fallback umstellen.
+- [x] TargetManager fuer dichten Stall defensiv konfigurieren: DIL-ID zuerst, raeumliches Merging nur sehr nah.
+- [x] Launch-Profil fuer Simulation mit Fake-DIL, Bridge, FakeNav2 und Missionsnodes ergaenzen.
+- [x] Launch-Profil fuer echte Roboter-/DIL-Integration ohne FakeNav2 ergaenzen.
 - [ ] Optional: RViz-Visualisierung um Score-Werte und Target-Status erweitern.
 - [ ] Roboter über Rviz Set Goal zu einem Target schicken
 
@@ -144,20 +154,35 @@ Konfigurierbare Parameter:
 6. FakeNav2 realistisch genug machen, um Replanning beobachten zu koennen.
 7. Optionales Goal-Abbrechen/Preemption.
 
+## UDS-Rollen
+
+- `uds_server`: minimaler Fake-DIL-Server. Sendet nur getrackte Hennen mit Detektor-ID, Position und Prioritaet.
+- `scenario_uds_server`: HAW-Testdatenquelle mit reproduzierbaren Szenarien.
+- `uds_bridge_node`: UDS/Protobuf nach ROS2 `/dil/frame`; macht selbst keine Tracking- oder Missionslogik.
+
+Langfristiges Ziel:
+
+```text
+DIL oder Fake-DIL -> UDS/Protobuf -> uds_bridge_node -> /dil/frame
+                                                       -> target_manager
+                                                       -> /mission/tracked_targets
+                                                       -> mission_executor
+```
+
 ## Reproduzierbare Simulationsszenarien
 
-Der `poultry_rob_bridge` UDS-Server kann ueber `UDS_SCENARIO` gesteuert werden:
+Der `poultry_rob_bridge` Szenario-UDS-Server kann ueber `UDS_SCENARIO` gesteuert werden:
 
 ```bash
-UDS_SCENARIO=basic ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=new_near_hen ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=priority_ramp ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=new_high_priority_far ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=hen_disappears_before_arrival ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=hen_moves ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=many_hens_uniform ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=many_hens_clusters ros2 run poultry_rob_bridge uds_server
-UDS_SCENARIO=many_hens_hotspot ros2 run poultry_rob_bridge uds_server
+UDS_SCENARIO=basic ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=new_near_hen ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=priority_ramp ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=new_high_priority_far ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=hen_disappears_before_arrival ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=hen_moves ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=many_hens_uniform ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=many_hens_clusters ros2 run poultry_rob_bridge scenario_uds_server
+UDS_SCENARIO=many_hens_hotspot ros2 run poultry_rob_bridge scenario_uds_server
 ```
 
 - `basic`: zwei stehende Hennen, eine davon mit hoeherer Prioritaet.
@@ -173,7 +198,7 @@ UDS_SCENARIO=many_hens_hotspot ros2 run poultry_rob_bridge uds_server
 
 Die Szenarien senden absichtlich kein `ROBOT`-Objekt mehr. Die aktuelle Roboterposition soll im Integrationstest vom `fake_nav2_server` ueber TF `map -> base_link` kommen.
 
-Der FakeNav2-Server schreibt erreichte Zielpositionen nach `/tmp/poultry_robot_visits.jsonl`. Der UDS-Server liest neue Events und entfernt Hennen im Radius `UDS_VISIT_CLEAR_RADIUS_M` aus den folgenden Frames. Damit wird simuliert, dass Hennen nach Roboterbesuch verscheucht werden.
+Der FakeNav2-Server schreibt erreichte Zielpositionen nach `/tmp/poultry_robot_visits.jsonl`. Nur der `scenario_uds_server` liest neue Events und entfernt Hennen im Radius `UDS_VISIT_CLEAR_RADIUS_M` aus den folgenden Frames. Damit wird simuliert, dass Hennen nach Roboterbesuch verscheucht werden.
 
 ## RViz-Visualisierung
 

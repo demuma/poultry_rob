@@ -1,4 +1,5 @@
-from poultry_rob_bridge.uds_server import build_frame, priority_ramp
+from poultry_rob_bridge.scenario_uds_server import build_frame, priority_ramp
+from poultry_rob_bridge.uds_server import build_frame as build_minimal_frame
 
 
 def objects_by_id(frame):
@@ -12,6 +13,15 @@ def test_priority_ramp_steps_every_15_seconds():
     assert priority_ramp(30.0) == 2
     assert priority_ramp(45.0) == 3
     assert priority_ramp(90.0) == 3
+
+
+def test_minimal_uds_server_matches_dil_shape_without_scenario_logic():
+    frame = build_minimal_frame(1)
+
+    assert frame.header.seq == 1
+    assert frame.header.frame_id == "camera_optical_frame"
+    assert sorted(objects_by_id(frame)) == [1, 2]
+    assert all(obj.type == "HEN" for obj in frame.objects)
 
 
 def test_new_near_hen_adds_third_hen_after_three_seconds():

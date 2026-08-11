@@ -12,7 +12,11 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'),
-            ['launch/mission_executor.launch.py']),
+            [
+                'launch/mission_executor.launch.py',
+                'launch/simulation.launch.py',
+                'launch/robot_mission.launch.py',
+            ]),
         (os.path.join('share', package_name, 'config'),
             ['config/mission_executor.yaml']),
         (os.path.join('share', package_name, 'rviz'),
@@ -34,6 +38,7 @@ setup(
             'mission_executor = high_level_mission_planer.mission_executor:main',
             'fake_nav2_server = high_level_mission_planer.fake_nav2_server:main',
             'mission_visualizer = high_level_mission_planer.mission_visualizer:main',
+            'target_manager = high_level_mission_planer.target_manager:main',
         ],
     },
 )

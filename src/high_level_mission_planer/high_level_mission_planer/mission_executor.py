@@ -16,6 +16,7 @@ from action_msgs.msg import GoalStatus
 from std_msgs.msg import UInt32MultiArray
 
 from poultry_rob_bridge_msgs.msg import Frame
+from poultry_rob_bridge_msgs.msg import TrackedTargetArray
 
 from high_level_mission_planer.mission_logic import (
     MissionScoringConfig,
@@ -33,9 +34,9 @@ class MissionExecutor(Node):
 
         self.declare_parameter("travel_strategy", "nearest_neighbor")
         self.declare_parameter("approach_strategy", "direct")
-        self.declare_parameter("target_stale_timeout_sec", 2.0)
+        self.declare_parameter("target_stale_timeout_sec", 5.0)
         self.declare_parameter("visited_cooldown_sec", 30.0)
-        self.declare_parameter("revisit_visited_after_cooldown", False)
+        self.declare_parameter("revisit_visited_after_cooldown", True)
         self.declare_parameter("arrival_radius_m", 0.75)
         self.declare_parameter("priority_weight", 2.5)
         self.declare_parameter("dwell_weight", 0.0)
@@ -48,6 +49,11 @@ class MissionExecutor(Node):
         self.declare_parameter("enable_nav_watchdog", True)
         self.declare_parameter("nav_watchdog_period_sec", 1.0)
         self.declare_parameter("nav_recovery_grace_sec", 2.0)
+        self.declare_parameter("use_tracked_targets", True)
+        self.declare_parameter("tracked_targets_topic", "/mission/tracked_targets")
+        self.declare_parameter("dil_frame_topic", "/dil/frame")
+        self.declare_parameter("enable_dil_frame_fallback", True)
+        self.declare_parameter("tracked_targets_timeout_sec", 2.0)
 
         # Permanent storage (history capable)
         # Columns: id | type | priority | x | y | timestamp
@@ -66,11 +72,18 @@ class MissionExecutor(Node):
         self.nav_outage_started_at: Optional[float] = None
         self.waiting_for_nav_recovery = False
         self.goal_sequence = 0
+        self.last_tracked_targets_at: Optional[float] = None
 
         self.create_subscription(
             Frame,
-            "/dil/frame",
+            self.get_parameter("dil_frame_topic").get_parameter_value().string_value,
             self.new_positions_callback,
+            10
+        )
+        self.create_subscription(
+            TrackedTargetArray,
+            self.get_parameter("tracked_targets_topic").get_parameter_value().string_value,
+            self.tracked_targets_callback,
             10
         )
         self.current_goal_pub = self.create_publisher(
@@ -115,6 +128,34 @@ class MissionExecutor(Node):
             return stamp_sec
         return self.get_clock().now().nanoseconds / 1e9
 
+    def _use_tracked_targets(self) -> bool:
+        return self.get_parameter("use_tracked_targets").get_parameter_value().bool_value
+
+    def _dil_frame_fallback_enabled(self) -> bool:
+        return self.get_parameter("enable_dil_frame_fallback").get_parameter_value().bool_value
+
+    def _tracked_targets_timeout(self) -> float:
+        return max(
+            self.get_parameter("tracked_targets_timeout_sec").get_parameter_value().double_value,
+            0.1,
+        )
+
+    def _dil_frame_fallback_active(self) -> bool:
+        if not self._use_tracked_targets():
+            return True
+        if not self._dil_frame_fallback_enabled():
+            return False
+        if self.last_tracked_targets_at is None:
+            return True
+        return self._now_seconds() - self.last_tracked_targets_at > self._tracked_targets_timeout()
+
+    def _start_mission_if_idle(self):
+        if not self.mission_active and self._has_available_target():
+            self.mission_active = True
+
+            if self._start_timer is None:
+                self._start_timer = self.create_timer(0.01, self._start_mission_once)
+
     def _update_target(self, obj, source_frame: str, stamp_sec: float):
         tx, ty = self._transform_point(obj.position.x, obj.position.y, source_frame)
         target_id = int(obj.id)
@@ -146,6 +187,50 @@ class MissionExecutor(Node):
         elif existing.status == "stale":
             existing.status = "active"
 
+    def _update_target_from_tracked(self, tracked, source_frame: str):
+        tx, ty = self._transform_point(tracked.position.x, tracked.position.y, source_frame)
+        target_id = int(tracked.target_id)
+        first_seen = self._stamp_to_seconds(tracked.first_seen)
+        last_seen = self._stamp_to_seconds(tracked.last_seen)
+        incoming_status = tracked.status or "active"
+
+        existing = self.targets.get(target_id)
+        if existing is None:
+            self.targets[target_id] = Target(
+                id=target_id,
+                type=tracked.type,
+                priority=int(tracked.priority),
+                x=tx,
+                y=ty,
+                first_seen=first_seen,
+                last_seen=last_seen,
+                seen_count=int(tracked.seen_count),
+                status=incoming_status,
+            )
+            return
+
+        moved_distance = math.hypot(tx - existing.x, ty - existing.y)
+        existing.type = tracked.type
+        existing.priority = int(tracked.priority)
+        existing.x = tx
+        existing.y = ty
+        existing.first_seen = min(existing.first_seen, first_seen)
+        existing.last_seen = last_seen
+        existing.seen_count = max(existing.seen_count, int(tracked.seen_count))
+
+        if existing.status == "in_progress":
+            return
+        if existing.status == "visited":
+            if moved_distance > self._arrival_radius():
+                existing.status = "active"
+                existing.visited_at = None
+            return
+
+        if incoming_status in ("active", "stale"):
+            existing.status = incoming_status
+        else:
+            existing.status = "active"
+
     def _start_mission_once(self):
         if self._start_timer is not None:
             self._start_timer.cancel()
@@ -154,6 +239,9 @@ class MissionExecutor(Node):
         self.execute_mission()
 
     def new_positions_callback(self, msg: Frame):
+        if not self._dil_frame_fallback_active():
+            return
+
         source_frame = msg.header.frame_id or "camera_optical_frame"
         stamp_sec = self._stamp_to_seconds(msg.header.stamp)
 
@@ -193,11 +281,31 @@ class MissionExecutor(Node):
             current_target = self.targets.get(self.current_target_id) if self.current_target_id is not None else None
             self._publish_plan_preview(current_target)
 
-        if not self.mission_active and self._has_available_target():
-            self.mission_active = True
+        self._start_mission_if_idle()
 
-            if self._start_timer is None:
-                self._start_timer = self.create_timer(0.01, self._start_mission_once)
+    def tracked_targets_callback(self, msg: TrackedTargetArray):
+        if not self._use_tracked_targets():
+            return
+
+        self.last_tracked_targets_at = self._now_seconds()
+        source_frame = msg.header.frame_id or "map"
+
+        for tracked in msg.targets:
+            self.get_logger().info(
+                f"Tracked target: target_id={tracked.target_id} source_id={tracked.source_id} "
+                f"type={tracked.type} prio={tracked.priority} status={tracked.status} "
+                f"x={tracked.position.x:.3f} y={tracked.position.y:.3f}"
+            )
+            if tracked.type == "HEN":
+                self._update_target_from_tracked(tracked, source_frame)
+
+        self._publish_visited_targets()
+
+        if self._has_available_target():
+            current_target = self.targets.get(self.current_target_id) if self.current_target_id is not None else None
+            self._publish_plan_preview(current_target)
+
+        self._start_mission_if_idle()
 
     # ==========================================================
     # STRATEGY SELECTION

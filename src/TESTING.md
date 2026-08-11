@@ -11,6 +11,28 @@ source install/setup.bash
 
 ## Start detector/bridge simulation
 
+Recommended all-in-one simulation launch:
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/maxdemu/Documents/ros2-ws/install/setup.bash
+
+ros2 launch high_level_mission_planer simulation.launch.py \
+  scenario:=new_near_hen \
+  use_robot_description:=true
+```
+
+With RViz:
+
+```bash
+ros2 launch high_level_mission_planer simulation.launch.py \
+  scenario:=new_near_hen \
+  use_robot_description:=true \
+  use_rviz:=true
+```
+
+Manual startup remains useful when debugging individual components:
+
 Terminal 1:
 
 ```bash
@@ -22,10 +44,10 @@ Terminal 2:
 ```bash
 source /opt/ros/humble/setup.bash
 source /home/maxdemu/Documents/ros2-ws/install/setup.bash
-UDS_SCENARIO=new_near_hen ros2 run poultry_rob_bridge uds_server
+UDS_SCENARIO=new_near_hen ros2 run poultry_rob_bridge scenario_uds_server
 ```
 
-Expected UDS server logs:
+Expected scenario UDS server logs:
 
 ```text
 [server] listening on /tmp/farm.sock scenario=new_near_hen
@@ -40,7 +62,9 @@ ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
   ros2 topic echo /dil/frame --once
 ```
 
-The UDS server supports these deterministic scenarios:
+The default `uds_server` is intentionally minimal and mimics the real DIL side:
+it only sends tracked hens with detector-owned `id`, `position`, and `priority`.
+Use `scenario_uds_server` for deterministic HAW simulation cases:
 
 | Scenario | Purpose |
 | --- | --- |
@@ -62,17 +86,17 @@ Large scenarios can be tuned with environment variables:
 ```bash
 UDS_SCENARIO=many_hens_clusters UDS_HEN_COUNT=250 UDS_RANDOM_SEED=7 \
 UDS_FIELD_MIN_X=-5 UDS_FIELD_MAX_X=35 UDS_FIELD_MIN_Y=-12 UDS_FIELD_MAX_Y=12 \
-  ros2 run poultry_rob_bridge uds_server
+  ros2 run poultry_rob_bridge scenario_uds_server
 ```
 
-The fake robot writes reached goal positions to `/tmp/poultry_robot_visits.jsonl`. The UDS server reads new visit events and removes hens within `UDS_VISIT_CLEAR_RADIUS_M` from following frames, simulating that hens are scared away after the robot arrives.
+The fake robot writes reached goal positions to `/tmp/poultry_robot_visits.jsonl`. The scenario UDS server can read new visit events and remove hens within `UDS_VISIT_CLEAR_RADIUS_M` from following frames, simulating that hens are scared away after the robot arrives.
 
 ```bash
 UDS_ENABLE_VISIT_EFFECTS=true UDS_VISIT_CLEAR_RADIUS_M=0.8 \
-  ros2 run poultry_rob_bridge uds_server
+  ros2 run poultry_rob_bridge scenario_uds_server
 ```
 
-By default, old visit events from previous runs are ignored when the UDS server starts. Set `UDS_REPLAY_VISIT_EVENTS=true` to replay them.
+By default, old visit events from previous runs are ignored when the scenario UDS server starts. Set `UDS_REPLAY_VISIT_EVENTS=true` to replay them.
 
 ## Current scoring setup
 
@@ -117,6 +141,25 @@ ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
   ros2 launch high_level_mission_planer mission_executor.launch.py use_robot_description:=true
 ```
 
+## Start real robot mission side
+
+When the real DIL UDS server and robot/Nav2 are running separately, start the HAW side with:
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/maxdemu/Documents/ros2-ws/install/setup.bash
+
+ros2 launch high_level_mission_planer robot_mission.launch.py
+```
+
+Optional RViz:
+
+```bash
+ros2 launch high_level_mission_planer robot_mission.launch.py use_rviz:=true
+```
+
+Only enable `use_robot_description:=true` if the real robot does not already start its own `robot_state_publisher`.
+
 By default this uses the lightweight visualization model installed with
 `high_level_mission_planer`. The robot repository's original Xacro can be used
 later through its own `robot_description` launch once its hardware dependencies
@@ -160,6 +203,7 @@ Visualization topics:
 ```text
 /visualization_marker_array     # RViz MarkerArray display: field, hens, labels, robot, current goal
 /mission/visualization_markers  # same MarkerArray on a project-specific debug topic
+/mission/tracked_targets        # TargetManager output: stable HAW target table from /dil/frame
 /mission/robot_path             # accumulated robot trajectory
 /mission/planned_target_sequence # current target-sequence preview, not a guaranteed full route
 /mission/current_goal           # current mission goal from MissionExecutor
@@ -169,6 +213,21 @@ Visualization topics:
 /tf                             # map -> base_link and camera transform
 /robot_description              # URDF model when use_robot_description:=true
 ```
+
+The mission executor and visualizer prefer `/mission/tracked_targets`. They only
+fall back to raw `/dil/frame` if tracked targets are enabled but no tracked
+target message is received for `tracked_targets_timeout_sec`.
+
+The target manager is intentionally conservative for dense barns:
+
+```yaml
+association_radius_m: 0.35
+same_source_max_jump_m: 0.8
+```
+
+It trusts stable DIL IDs first. If an ID is missing or changes, detections are
+only merged spatially when they are very close. This favors harmless duplicate
+targets over incorrectly merging two nearby hens.
 
 Visited hens stay suppressed by default while the detector keeps reporting them at the same position. If a hen with the same ID moves farther than `arrival_radius_m`, it becomes active again.
 
