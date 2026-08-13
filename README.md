@@ -158,6 +158,12 @@ Run real DIL with fake Nav2 instead of the robot:
 ./docker/run_haw_dil_fake_robot.sh
 ```
 
+Run fake DIL with the real robot/Nav2 stack:
+
+```bash
+./docker/run_haw_fake_dil_robot.sh scenario:=basic
+```
+
 Run visualization separately:
 
 ```bash
@@ -197,6 +203,15 @@ targets over accidentally merging two different nearby hens.
 Visited hens are suppressed while they remain at the same position. If a hen
 with the same target ID moves farther than `arrival_radius_m`, it can become
 active again.
+
+## Known Integration Issues
+
+- HAW currently filters explicitly for `type == "HEN"`. In the DIL system,
+  `HEN` corresponds to enum value `4`; the current integration workaround maps
+  this to the outgoing type string `"HEN"` before HAW receives it.
+- If the HAW UDS client stops, the DIL UDS server can currently crash with
+  `BrokenPipeError` at `send_msg(docker_server, payload)`. The DIL server should
+  catch disconnected clients and wait for a new connection.
 
 ## Important Topics
 

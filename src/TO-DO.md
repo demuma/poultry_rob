@@ -145,8 +145,16 @@ Konfigurierbare Parameter:
 - [x] HAW-Dockerfile fuer Bridge, TargetManager, MissionExecutor und optionale Visualisierung ergaenzen.
 - [x] Docker-Startskripte fuer Mission, Visualisierung und Simulation ergaenzen.
 - [x] Profil fuer echtes DIL mit FakeNav2 ohne Szenario-UDS-Server ergaenzen.
+- [x] Profil fuer Fake-DIL/Szenario-UDS mit echtem Roboter/Nav2 ohne FakeNav2 ergaenzen.
+- [ ] DIL/HAW Typkonvention klaeren: DIL nutzt String-Enums, `HEN` entspricht aktuell Enum-Wert `4`; derzeit mappt DIL selbst `4 -> "HEN"` vor dem UDS-Versand.
+- [ ] DIL UDS-Server gegen HAW-Client-Abbruch robust machen: aktuell kann ein abgebrochener UDS-Client zu `BrokenPipeError` bei `send_msg(docker_server, payload)` und DIL-Absturz fuehren.
 - [ ] Optional: RViz-Visualisierung um Score-Werte und Target-Status erweitern.
 - [ ] Roboter über Rviz Set Goal zu einem Target schicken
+
+## Offene Integrationspunkte
+
+- **Objekttyp `HEN`:** HAW filtert aktuell explizit nach `type == "HEN"`. Im DIL-System werden String-Enums verwendet; dort entspricht `HEN` aktuell dem Enum-Wert `4`. Im Integrationstest wurde das so geloest, dass DIL Objekte mit Wert `4` erkennt und im UDS/ROS-Datenfluss als `"HEN"` abspeichert. Langfristig sollte die DIL/HAW-Schnittstelle eindeutig dokumentieren, ob der Typ als String (`"HEN"`) oder als numerischer Enum-Wert uebertragen wird.
+- **UDS Broken Pipe:** Wenn das HAW-System abstuerzt, gestoppt wird oder der UDS-Client anderweitig abbricht, zeigt DIL aktuell einen Fehler und kann mit `BrokenPipeError: Datenuebergabe unterbrochen` im Traceback bei `send_msg(docker_server, payload)` abstuerzen. Der DIL UDS-Server sollte Client-Abbrueche behandeln, den Socket/Client sauber schliessen und auf eine neue Verbindung warten.
 
 ## Erste Umsetzungsreihenfolge
 

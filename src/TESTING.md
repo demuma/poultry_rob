@@ -262,6 +262,12 @@ Run real DIL with the fake robot/Nav2 simulation:
 ./docker/run_haw_dil_fake_robot.sh
 ```
 
+Run fake DIL with the real robot/Nav2 stack:
+
+```bash
+./docker/run_haw_fake_dil_robot.sh scenario:=basic
+```
+
 Run visualization separately:
 
 ```bash
@@ -282,6 +288,18 @@ Run the full simulation profile:
 ```bash
 ./docker/run_haw_simulation.sh scenario:=new_near_hen use_robot_description:=true
 ```
+
+## Known DIL integration issues
+
+- HAW filters detections with `type == "HEN"`. In the DIL system, object types
+  currently come from string enums and `HEN` corresponds to enum value `4`.
+  During the current integration test, DIL maps objects with value `4` to the
+  outgoing type string `"HEN"`. The final interface should document this type
+  convention explicitly.
+- If the HAW UDS client stops or crashes, the DIL UDS server can currently fail
+  with `BrokenPipeError: Datenuebergabe unterbrochen` in
+  `send_msg(docker_server, payload)`. DIL should handle disconnected clients,
+  close the broken connection, and wait for a new HAW client.
 
 ## Nav2 restart recovery
 

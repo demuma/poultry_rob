@@ -18,6 +18,7 @@ setup(
                 'launch/robot_mission.launch.py',
                 'launch/visualization.launch.py',
                 'launch/dil_fake_robot.launch.py',
+                'launch/fake_dil_robot.launch.py',
             ]),
         (os.path.join('share', package_name, 'config'),
             ['config/mission_executor.yaml']),
