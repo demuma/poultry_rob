@@ -1,59 +1,30 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 import os
 
 
 def generate_launch_description():
-    use_robot_description = LaunchConfiguration("use_robot_description")
-    use_rviz = LaunchConfiguration("use_rviz")
-    robot_description_package = LaunchConfiguration("robot_description_package")
-    robot_description_file = LaunchConfiguration("robot_description_file")
+    use_static_camera_tf = LaunchConfiguration("use_static_camera_tf")
 
     config = os.path.join(
         get_package_share_directory("high_level_mission_planer"),
         "config",
         "mission_executor.yaml"
     )
-    rviz_config = os.path.join(
-        get_package_share_directory("high_level_mission_planer"),
-        "rviz",
-        "mission_visualization.rviz"
-    )
-
-    robot_description_content = Command([
-        "cat ",
-        PathJoinSubstitution([
-            FindPackageShare(robot_description_package),
-            "urdf",
-            robot_description_file,
-        ]),
-    ])
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            "use_robot_description",
-            default_value="false",
-            description="Start robot_state_publisher for the poultry robot URDF.",
-        ),
-        DeclareLaunchArgument(
-            "use_rviz",
-            default_value="false",
-            description="Start RViz with the mission visualization config.",
-        ),
-        DeclareLaunchArgument(
-            "robot_description_package",
-            default_value="high_level_mission_planer",
-            description="Package that provides the poultry robot URDF/Xacro.",
-        ),
-        DeclareLaunchArgument(
-            "robot_description_file",
-            default_value="poultry_robot_visual.urdf",
-            description="URDF file below the package's urdf directory.",
+            "use_static_camera_tf",
+            default_value="true",
+            description=(
+                "Publish the simple map -> camera_optical_frame transform used by "
+                "the current DIL/simulation setup. Disable when the robot/DIL stack "
+                "provides the transform itself."
+            ),
         ),
         Node(
             package="high_level_mission_planer",
@@ -79,24 +50,7 @@ def generate_launch_description():
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
-            arguments=["0.1", "-0.1", "0", "0", "0", "0", "map", "camera_optical_frame"]
-        ),
-        Node(
-            package="robot_state_publisher",
-            executable="robot_state_publisher",
-            name="robot_state_publisher",
-            output="screen",
-            condition=IfCondition(use_robot_description),
-            parameters=[{
-                "robot_description": robot_description_content,
-            }],
-        ),
-        Node(
-            package="rviz2",
-            executable="rviz2",
-            name="rviz2",
-            arguments=["-d", rviz_config],
-            output="screen",
-            condition=IfCondition(use_rviz),
+            arguments=["0.1", "-0.1", "0", "0", "0", "0", "map", "camera_optical_frame"],
+            condition=IfCondition(use_static_camera_tf),
         )
     ])

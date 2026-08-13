@@ -7,8 +7,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    use_robot_description = LaunchConfiguration("use_robot_description")
-    use_rviz = LaunchConfiguration("use_rviz")
+    use_static_camera_tf = LaunchConfiguration("use_static_camera_tf")
     ros_domain_id = LaunchConfiguration("ros_domain_id")
     rmw_implementation = LaunchConfiguration("rmw_implementation")
 
@@ -19,8 +18,7 @@ def generate_launch_description():
     ])
 
     return LaunchDescription([
-        DeclareLaunchArgument("use_robot_description", default_value="false"),
-        DeclareLaunchArgument("use_rviz", default_value="false"),
+        DeclareLaunchArgument("use_static_camera_tf", default_value="true"),
         DeclareLaunchArgument("ros_domain_id", default_value="75"),
         DeclareLaunchArgument("rmw_implementation", default_value="rmw_cyclonedds_cpp"),
         SetEnvironmentVariable("ROS_DOMAIN_ID", ros_domain_id),
@@ -34,8 +32,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(mission_launch),
             launch_arguments={
-                "use_robot_description": use_robot_description,
-                "use_rviz": use_rviz,
+                "use_static_camera_tf": use_static_camera_tf,
             }.items(),
         ),
     ])

@@ -112,7 +112,7 @@ max_priority: 3.0
 
 This keeps the first experiments focused: priority comes from the detector, distance comes from the robot pose via TF.
 
-## Start robot and mission executor simulation
+## Start robot and mission executor simulation manually
 
 Terminal 3:
 
@@ -132,13 +132,15 @@ ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
   ros2 launch high_level_mission_planer mission_executor.launch.py
 ```
 
-With the poultry robot URDF in RViz:
+Visualization can be started separately:
 
 ```bash
 source /opt/ros/humble/setup.bash
 source /home/maxdemu/Documents/ros2-ws/install/setup.bash
 ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
-  ros2 launch high_level_mission_planer mission_executor.launch.py use_robot_description:=true
+  ros2 launch high_level_mission_planer visualization.launch.py \
+    use_robot_description:=true \
+    use_rviz:=true
 ```
 
 ## Start real robot mission side
@@ -152,10 +154,12 @@ source /home/maxdemu/Documents/ros2-ws/install/setup.bash
 ros2 launch high_level_mission_planer robot_mission.launch.py
 ```
 
-Optional RViz:
+Optional visualization:
 
 ```bash
-ros2 launch high_level_mission_planer robot_mission.launch.py use_rviz:=true
+ros2 launch high_level_mission_planer visualization.launch.py \
+  use_robot_description:=true \
+  use_rviz:=true
 ```
 
 Only enable `use_robot_description:=true` if the real robot does not already start its own `robot_state_publisher`.
@@ -235,6 +239,42 @@ Marker colors by priority:
 
 ```text
 P0 green, P1 yellow, P2 orange, P3 red
+```
+
+## HAW Docker container
+
+Build the HAW ROS Humble image from the repository `src` directory:
+
+```bash
+cd /home/maxdemu/Documents/ros2-ws/src/poultry_rob/src
+./docker/build_haw_image.sh
+```
+
+Run the live mission stack headless:
+
+```bash
+./docker/run_haw_mission.sh
+```
+
+Run visualization separately:
+
+```bash
+./docker/run_haw_visualization.sh use_robot_description:=true use_rviz:=true
+```
+
+If RViz prints `Authorization required` or `could not connect to display`, allow
+the root user inside the container to access the local X server:
+
+```bash
+xhost +si:localuser:root
+```
+
+Then start the visualization container again.
+
+Run the full simulation profile:
+
+```bash
+./docker/run_haw_simulation.sh scenario:=new_near_hen use_robot_description:=true
 ```
 
 ## Nav2 restart recovery

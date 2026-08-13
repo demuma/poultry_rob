@@ -18,6 +18,11 @@ def generate_launch_description():
         "launch",
         "mission_executor.launch.py",
     ])
+    visualization_launch = PathJoinSubstitution([
+        FindPackageShare("high_level_mission_planer"),
+        "launch",
+        "visualization.launch.py",
+    ])
 
     return LaunchDescription([
         DeclareLaunchArgument("scenario", default_value="new_near_hen"),
@@ -48,6 +53,9 @@ def generate_launch_description():
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(mission_launch),
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(visualization_launch),
             launch_arguments={
                 "use_robot_description": use_robot_description,
                 "use_rviz": use_rviz,

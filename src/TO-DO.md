@@ -140,6 +140,10 @@ Konfigurierbare Parameter:
 - [x] TargetManager fuer dichten Stall defensiv konfigurieren: DIL-ID zuerst, raeumliches Merging nur sehr nah.
 - [x] Launch-Profil fuer Simulation mit Fake-DIL, Bridge, FakeNav2 und Missionsnodes ergaenzen.
 - [x] Launch-Profil fuer echte Roboter-/DIL-Integration ohne FakeNav2 ergaenzen.
+- [x] Missions-Launch von Visualisierung/RViz trennen.
+- [x] Separaten `visualization.launch.py` fuer RViz/RobotModel/Marker ergaenzen.
+- [x] HAW-Dockerfile fuer Bridge, TargetManager, MissionExecutor und optionale Visualisierung ergaenzen.
+- [x] Docker-Startskripte fuer Mission, Visualisierung und Simulation ergaenzen.
 - [ ] Optional: RViz-Visualisierung um Score-Werte und Target-Status erweitern.
 - [ ] Roboter über Rviz Set Goal zu einem Target schicken
 
@@ -221,7 +225,7 @@ rviz2 -d /home/maxdemu/Documents/ros2-ws/install/high_level_mission_planer/share
 URDF mit FakeNav2 koppeln:
 
 ```bash
-ros2 launch high_level_mission_planer mission_executor.launch.py use_robot_description:=true
+ros2 launch high_level_mission_planer visualization.launch.py use_robot_description:=true
 ```
 
 Der FakeNav2-Server liefert `map -> base_link`; `robot_state_publisher` haengt daran die URDF-Links an. Standard ist eine schlanke Visualisierungs-URDF im `high_level_mission_planer`-Package. Die originale Xacro-`robot_description` aus dem Roboter-Repo kann spaeter ueber deren eigenen Launch genutzt werden, sobald `xacro` und die Hardware-Abhaengigkeiten installiert sind.

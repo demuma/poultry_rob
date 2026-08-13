@@ -16,6 +16,7 @@ setup(
                 'launch/mission_executor.launch.py',
                 'launch/simulation.launch.py',
                 'launch/robot_mission.launch.py',
+                'launch/visualization.launch.py',
             ]),
         (os.path.join('share', package_name, 'config'),
             ['config/mission_executor.yaml']),

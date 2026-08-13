@@ -78,10 +78,21 @@ source /opt/ros/humble/setup.bash
 source install/setup.bash
 
 ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
-  ros2 launch high_level_mission_planer robot_mission.launch.py use_rviz:=true
+  ros2 launch high_level_mission_planer robot_mission.launch.py
 ```
 
 This launch does not start fake Nav2 and does not start a fake DIL server.
+It also does not start RViz or the visualization node.
+
+Start visualization separately when needed:
+
+```bash
+ROS_DOMAIN_ID=75 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+  ros2 launch high_level_mission_planer visualization.launch.py \
+    use_robot_description:=true \
+    use_rviz:=true
+```
+
 Enable `use_robot_description:=true` only if the real robot stack does not
 already start its own `robot_state_publisher`.
 
@@ -89,19 +100,41 @@ If DIL starts later, the system waits without moving. Empty tracked-target
 messages such as `targets: []` mean the target manager is alive but currently
 has no hens.
 
-## Docker Container for DIL/UDS Testing
+## HAW Docker Container
 
-Build the container from `src`:
+The real DIL system can run natively on Ubuntu 24.04 and provide the UDS socket.
+The HAW stack runs in one ROS Humble container and consumes `/tmp/farm.sock`.
+
+Build the image from `poultry_rob/src`:
 
 ```bash
 cd poultry_rob/src
-docker build . -f ./poultry_rob_bridge/Dockerfile -t dil-ros2-humble:latest
+./docker/build_haw_image.sh
 ```
 
-Run the container:
+Run the headless mission stack:
 
 ```bash
-docker run --rm -it --network host -v /tmp:/tmp --name dil dil-ros2-humble:latest
+./docker/run_haw_mission.sh
+```
+
+Run visualization separately:
+
+```bash
+./docker/run_haw_visualization.sh use_robot_description:=true use_rviz:=true
+```
+
+If RViz cannot connect to `DISPLAY`, allow local root X11 access once on the
+host and restart the visualization container:
+
+```bash
+xhost +si:localuser:root
+```
+
+Run the full simulation profile:
+
+```bash
+./docker/run_haw_simulation.sh scenario:=new_near_hen use_robot_description:=true
 ```
 
 ## Target Handling

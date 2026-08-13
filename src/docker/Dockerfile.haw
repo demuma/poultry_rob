@@ -1,0 +1,42 @@
+FROM ros:humble-ros-base-jammy
+
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && apt-get install -y \
+    python3-colcon-common-extensions \
+    python3-pip \
+    python3-pytest \
+    python3-numpy \
+    protobuf-compiler \
+    libprotobuf-dev \
+    ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-nav2-msgs \
+    ros-humble-robot-state-publisher \
+    ros-humble-rviz2 \
+    ros-humble-tf2-ros \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir "protobuf>=3.20,<4" grpcio-tools
+
+WORKDIR /ros2_ws
+
+COPY poultry_rob_bridge_msgs/ /ros2_ws/src/poultry_rob_bridge_msgs/
+COPY poultry_rob_bridge/ /ros2_ws/src/poultry_rob_bridge/
+COPY high_level_mission_planer/ /ros2_ws/src/high_level_mission_planer/
+
+RUN python3 -m grpc_tools.protoc \
+      -I /ros2_ws/src/poultry_rob_bridge/proto \
+      --python_out=/ros2_ws/src/poultry_rob_bridge/poultry_rob_bridge \
+      dil_frame.proto
+
+RUN source /opt/ros/humble/setup.bash && \
+    colcon build \
+      --packages-select poultry_rob_bridge_msgs poultry_rob_bridge high_level_mission_planer \
+      --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+COPY docker/haw_entrypoint.sh /haw_entrypoint.sh
+RUN chmod +x /haw_entrypoint.sh
+
+ENTRYPOINT ["/haw_entrypoint.sh"]
+CMD ["ros2", "launch", "high_level_mission_planer", "robot_mission.launch.py"]
