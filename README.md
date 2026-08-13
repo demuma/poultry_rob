@@ -5,6 +5,40 @@ mission planning. The system receives hen detections from DIL, manages stable
 mission targets, selects targets by detector priority and distance, and sends
 navigation goals to Nav2.
 
+## Quick Start with Docker
+
+For DIL/integration users, the recommended path is the HAW Docker container.
+The host only needs Docker, access to `/tmp/farm.sock`, and network access to
+the robot/ROS 2 network.
+
+```bash
+git clone <repo-url> poultry_rob
+cd poultry_rob/src
+./docker/build_haw_image.sh
+./docker/run_haw_mission.sh
+```
+
+Start RViz/monitoring separately when needed:
+
+```bash
+cd poultry_rob/src
+./docker/run_haw_visualization.sh use_robot_description:=true use_rviz:=true
+```
+
+For a full local simulation:
+
+```bash
+cd poultry_rob/src
+./docker/run_haw_simulation.sh \
+  scenario:=new_near_hen \
+  use_robot_description:=true \
+  use_rviz:=true
+```
+
+The real DIL system can run natively on Ubuntu 24.04. It only needs to provide
+the UDS socket at `/tmp/farm.sock`; the HAW stack itself runs inside the ROS
+Humble container.
+
 ## Architecture
 
 ```text
@@ -29,7 +63,7 @@ Raw `/dil/frame` is kept as fallback/debug input.
 | `poultry_rob_bridge` | UDS/protobuf bridge plus minimal and scenario-based fake DIL servers. |
 | `high_level_mission_planer` | Target management, mission execution, fake Nav2 simulation, RViz visualization, launch files. |
 
-## Build
+## Local ROS Build
 
 ```bash
 cd poultry_rob
@@ -100,7 +134,7 @@ If DIL starts later, the system waits without moving. Empty tracked-target
 messages such as `targets: []` mean the target manager is alive but currently
 has no hens.
 
-## HAW Docker Container
+## HAW Docker Details
 
 The real DIL system can run natively on Ubuntu 24.04 and provide the UDS socket.
 The HAW stack runs in one ROS Humble container and consumes `/tmp/farm.sock`.
@@ -134,7 +168,7 @@ xhost +si:localuser:root
 Run the full simulation profile:
 
 ```bash
-./docker/run_haw_simulation.sh scenario:=new_near_hen use_robot_description:=true
+./docker/run_haw_simulation.sh scenario:=new_near_hen use_robot_description:=true use_rviz:=true
 ```
 
 ## Target Handling
