@@ -256,6 +256,12 @@ Run the live mission stack headless:
 ./docker/run_haw_mission.sh
 ```
 
+Run real DIL with the fake robot/Nav2 simulation:
+
+```bash
+./docker/run_haw_dil_fake_robot.sh
+```
+
 Run visualization separately:
 
 ```bash

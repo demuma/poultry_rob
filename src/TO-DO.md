@@ -144,6 +144,7 @@ Konfigurierbare Parameter:
 - [x] Separaten `visualization.launch.py` fuer RViz/RobotModel/Marker ergaenzen.
 - [x] HAW-Dockerfile fuer Bridge, TargetManager, MissionExecutor und optionale Visualisierung ergaenzen.
 - [x] Docker-Startskripte fuer Mission, Visualisierung und Simulation ergaenzen.
+- [x] Profil fuer echtes DIL mit FakeNav2 ohne Szenario-UDS-Server ergaenzen.
 - [ ] Optional: RViz-Visualisierung um Score-Werte und Target-Status erweitern.
 - [ ] Roboter über Rviz Set Goal zu einem Target schicken
 

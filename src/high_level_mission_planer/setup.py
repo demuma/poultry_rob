@@ -17,6 +17,7 @@ setup(
                 'launch/simulation.launch.py',
                 'launch/robot_mission.launch.py',
                 'launch/visualization.launch.py',
+                'launch/dil_fake_robot.launch.py',
             ]),
         (os.path.join('share', package_name, 'config'),
             ['config/mission_executor.yaml']),
