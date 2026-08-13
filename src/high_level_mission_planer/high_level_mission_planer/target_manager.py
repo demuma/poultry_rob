@@ -25,7 +25,6 @@ class ManagedTarget:
     y: float
     first_seen: float
     last_seen: float
-    seen_count: int = 1
     status: str = "active"
 
 
@@ -190,7 +189,6 @@ class TargetManager(Node):
         target.x = x
         target.y = y
         target.last_seen = stamp_sec
-        target.seen_count += 1
         if target.status == "stale":
             target.status = "active"
 
@@ -265,7 +263,6 @@ class TargetManager(Node):
             tracked.position = Point(x=float(target.x), y=float(target.y), z=0.0)
             tracked.first_seen = self._seconds_to_stamp(target.first_seen)
             tracked.last_seen = self._seconds_to_stamp(target.last_seen)
-            tracked.seen_count = int(target.seen_count)
             tracked.status = target.status
             msg.targets.append(tracked)
 

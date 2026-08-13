@@ -179,7 +179,6 @@ class MissionExecutor(Node):
         existing.x = tx
         existing.y = ty
         existing.last_seen = stamp_sec
-        existing.seen_count += 1
 
         if existing.status == "visited" and moved_distance > self._arrival_radius():
             existing.status = "active"
@@ -204,7 +203,6 @@ class MissionExecutor(Node):
                 y=ty,
                 first_seen=first_seen,
                 last_seen=last_seen,
-                seen_count=int(tracked.seen_count),
                 status=incoming_status,
             )
             return
@@ -216,7 +214,6 @@ class MissionExecutor(Node):
         existing.y = ty
         existing.first_seen = min(existing.first_seen, first_seen)
         existing.last_seen = last_seen
-        existing.seen_count = max(existing.seen_count, int(tracked.seen_count))
 
         if existing.status == "in_progress":
             return

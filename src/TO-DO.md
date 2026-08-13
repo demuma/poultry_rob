@@ -29,7 +29,6 @@ Der MissionExecutor soll Hennen nicht mehr in der Eingangreihenfolge anfahren, s
   - aktuelle `x/y` Position im `map` Frame
   - `first_seen`
   - `last_seen`
-  - optional `seen_count`
   - optional `miss_count`
 - Status: `active`, `stale`, `visited`, `in_progress`
 - Verwende die Historie nur noch fuer Analyse/Debugging, nicht als primaere Planungsbasis.

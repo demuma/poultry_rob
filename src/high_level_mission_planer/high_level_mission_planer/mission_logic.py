@@ -12,7 +12,6 @@ class Target:
     y: float
     first_seen: float
     last_seen: float
-    seen_count: int = 1
     status: str = "active"
     visited_at: Optional[float] = None
 
